@@ -14,14 +14,42 @@
 - [ ] **No App Tracking Transparency (ATT) prompt call anywhere in the code**, despite the privacy policy promising "we request permission before accessing the IDFA." `react-native-google-mobile-ads`'s plugin config already sets the iOS usage-description string (`user_tracking_usage_description`), but nothing actually calls `requestTrackingPermissionsAsync()` at runtime. Without it, iOS ads run non-personalized only (not a rejection risk by itself, but the privacy policy's claim becomes inaccurate, and you're leaving ad revenue on the table) — decide whether to implement the call or soften the policy wording.
 - [ ] **Uncommitted change sitting in the working tree:** `app.json` android `versionCode` was bumped 2→3 locally but never committed. Decide if that's intentional and commit it (or let EAS's `autoIncrement: true` production profile handle it and revert).
 
-## Group B — Accounts & credentials (can't be verified from here — confirm directly)
+## Group B — Accounts & credentials
 
-- [ ] **Apple Developer Program membership** ($99/yr, under whatever entity — "Rumble Hold" per the bundle ID `com.rumblehold.paxello`) — active? The original brief claimed "developer accounts already submitted," but nothing in the repo or EAS config evidences a completed enrollment, and Apple's review can take 24-48h, so this should be the first thing confirmed/started if it isn't done, in parallel with Group A.
-- [ ] **Google Play Console developer account** ($25 one-time) — same question.
-- [ ] **EAS has no `submit` profile in `eas.json`** (only `development`/`preview`/`production` build profiles exist). Before `eas submit` will work you need either:
-  - iOS: an Apple ID + app-specific password, or (cleaner, recommended) an App Store Connect API key, plus the app record created in App Store Connect under bundle ID `com.rumblehold.paxello`.
-  - Android: a Google Play service account JSON key with release permissions, plus the app created in Play Console under package `com.rumblehold.paxello`.
-- [ ] `eas-cli` isn't installed anywhere I could check. Running `npx eas-cli@latest build ...` the first time will also prompt for Expo account login and, for iOS, can auto-generate the distribution certificate + provisioning profile if you let it manage credentials (recommended over doing it by hand in Xcode).
+**Update 2026-10-02, confirmed with Souriya:** these are **Sean's** Apple Developer and Google Play accounts, not a Rumble Hold org account (the `com.rumblehold.paxello` bundle ID is just the identifier string — it doesn't need to match the account holder's name). Status:
+
+- [x] **Google Play Console** — Souriya has access now. Android path is unblocked on the accounts side; proceed once Group A code blockers are fixed.
+- [ ] **Apple Developer Program** — Sean owns the account; the App Store Connect user invite to Souriya **never arrived** (or Souriya can't accept it). Don't wait on this — see "Unblocking Apple" below for a faster path that doesn't depend on the invite at all.
+- [ ] **EAS has no `submit` profile in `eas.json`** (only `development`/`preview`/`production` build profiles exist) — needs adding once credentials are sorted.
+- [ ] `eas-cli` isn't installed anywhere I could check. First run will also need an Expo/EAS account — confirm whose account the project lives under (`extra.eas.projectId` in `app.json` is `2448a5a2-6454-43b9-925d-61101cd415fd`) and that Souriya has access to *that* too; this can be a separate stuck-invite problem from the Apple one.
+
+### Unblocking Apple without the stuck invite
+
+Confirmed directly from Apple's own App Store Connect documentation: an **Account Holder or Admin can generate a Team API Key and hand the credentials to someone else** — this sidesteps the broken user-invite entirely and is also the standard non-interactive way `eas submit` authenticates anyway (better than an Apple ID + app-specific password for this kind of handoff). Ask Sean to:
+
+1. Log into **App Store Connect → Users and Access → Integrations → Team Keys**.
+2. Click **Generate API Key**, name it (e.g. "Paxello EAS"), and assign the **App Manager** role (sufficient for build/submit/TestFlight; no need to hand over Admin).
+3. **Download the `.p8` file immediately** — Apple only allows downloading it once — and send it to Souriya along with the **Key ID** and **Issuer ID** shown next to it, via a secure channel (not a casual Slack/email with the key attached in plaintext if avoidable).
+
+Once you have those three values, `eas.json` gets a `submit` profile like:
+```json
+"submit": {
+  "production": {
+    "ios": {
+      "appleTeamId": "<Sean's Apple Team ID>",
+      "ascAppId": "<App Store Connect app ID, once the app record exists>",
+      "ascApiKeyPath": "./AuthKey_XXXXXX.p8",
+      "ascApiKeyId": "<Key ID>",
+      "ascApiKeyIssuerId": "<Issuer ID>"
+    }
+  }
+}
+```
+and `eas submit --platform ios` can run without Souriya ever needing personal App Store Connect login access.
+
+**Caveat (worth confirming against current EAS docs when you get there, not fully verified here):** this API key cleanly solves *submission*. The *first* `eas build --platform ios` for a new app still typically needs an interactive Apple login to generate the distribution certificate + provisioning profile (EAS then stores and reuses them for later builds). Two ways around that: (a) Sean runs that one `eas build` himself, logging in with his own Apple ID when prompted, after which EAS's managed credentials are stored on the project and Souriya can build/submit from then on; or (b) separately chase the stuck App Store Connect invite (worth asking Sean to double-check the email address he invited and resend — Apple invites silently go nowhere if the email doesn't exactly match an Apple ID). (a) is faster and doesn't depend on fixing the invite at all.
+
+Also still worth confirming: whether Android actually needs anything equivalent from Sean (a Play Console service account JSON with release permissions) for `eas submit --platform android`, or whether Souriya's own Play Console access is already enough to create that key himself now that he's in.
 
 ## Group C — Store listing content (needed before either store will accept a submission)
 
