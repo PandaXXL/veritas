@@ -4,6 +4,8 @@
 
 **Bottom line:** no build has ever been submitted to TestFlight or the App/Play Store. `eas` isn't even installed locally, there's no `submit` profile in `eas.json`, and — more importantly — the ad and purchase code currently ships with literal placeholder IDs. A build made from `main` today would compile, but ads and the $4.99 "Remove Ads" purchase would not work for real users. Fix the blockers below before burning a build.
 
+**Status check 2026-10-05:** the icon/privacy-policy fix from 2026-10-02 (commits `9980b4f`, `5e79d2c`) is **still sitting local-only on Souriya's Mac** — `git fetch` confirms `origin/main` is still on the pre-fix commit. The push keeps failing from the Cowork device bridge (403 from its proxy to github.com). Needs a plain `git push origin main` from a normal terminal on that Mac.
+
 ## Group A — Code blockers (must fix before any build you intend to submit)
 
 - [ ] **AdMob App IDs are Google's public sample IDs, not real ones.** `app.json` plugins config has `androidAppId`/`iosAppId` = `ca-app-pub-3940256099942544~...` — that's Google's demo app ID, shared by every AdMob tutorial. Replace with the real App IDs from your AdMob account (one app per platform).
@@ -47,7 +49,11 @@ Once you have those three values, `eas.json` gets a `submit` profile like:
 ```
 and `eas submit --platform ios` can run without Souriya ever needing personal App Store Connect login access.
 
-**Caveat (worth confirming against current EAS docs when you get there, not fully verified here):** this API key cleanly solves *submission*. The *first* `eas build --platform ios` for a new app still typically needs an interactive Apple login to generate the distribution certificate + provisioning profile (EAS then stores and reuses them for later builds). Two ways around that: (a) Sean runs that one `eas build` himself, logging in with his own Apple ID when prompted, after which EAS's managed credentials are stored on the project and Souriya can build/submit from then on; or (b) separately chase the stuck App Store Connect invite (worth asking Sean to double-check the email address he invited and resend — Apple invites silently go nowhere if the email doesn't exactly match an Apple ID). (a) is faster and doesn't depend on fixing the invite at all.
+**Update 2026-10-05:** scratch the "Sean runs the first build himself" idea from the earlier version of this note — Sean doesn't have the code and isn't set up to run EAS, so that's not a real option.
+
+**Caveat (worth confirming against current EAS docs when you get there, not fully verified):** the open question is whether the *same* API key also lets EAS generate the distribution certificate + provisioning profile for the first `eas build --platform ios`, or whether that step still needs an interactive Apple ID login separately from submission. Apple has merged the old Developer Portal (Certificates, Identifiers & Profiles) into the same App Store Connect API the key authenticates against, so there's a real chance the key alone covers build *and* submit end to end — EAS's own docs hint at this ("authenticates using stored ASC API key **or** interactive auth" for the credentials step) but don't say it outright.
+
+**So: try the API key for `eas build` first.** If EAS prompts for an interactive Apple login anyway, the fallback is fixing the stuck invite — ask Sean to check Users and Access for the pending invitation, confirm the exact email address it was sent to, and resend it (Apple invites go nowhere silently if the email doesn't match an Apple ID, or if that Apple ID doesn't have 2FA set up). That's a re-check-and-resend ask, not a technical one, so it's fine to put to Sean either way.
 
 Also still worth confirming: whether Android actually needs anything equivalent from Sean (a Play Console service account JSON with release permissions) for `eas submit --platform android`, or whether Souriya's own Play Console access is already enough to create that key himself now that he's in.
 
@@ -58,14 +64,17 @@ Also still worth confirming: whether Android actually needs anything equivalent 
 - [ ] Age rating questionnaire — this one needs real thought, not a rubber stamp: the app explicitly engages with other faith traditions' positions (Protestant, JW, Muslim, etc.) and has an `age_group` field in the card data for exactly this reason (e.g. topics like pornography flagged `age_group`-gated). Apple's "Religious/Spiritual" and "Mature/Suggestive" categories will ask about this — answer based on the actual card content, not the app's self-image.
 - [ ] App Privacy ("nutrition label") in App Store Connect and the Data Safety form in Play Console — fill these from what's actually collected: AdMob device identifiers for ads, RevenueCat purchase data, nothing else (matches the privacy policy — once Group A's ATT item is resolved, make sure the "used for tracking" answer matches whatever you decide there).
 
-## Recommended path: TestFlight first, not direct-to-App-Store
+## Recommended path: Android moves first, iOS unblocks in parallel
 
-1. Fix Group A (code blockers) — these matter for TestFlight too; Apple's internal TestFlight review is lighter than full App Store review but a build with placeholder RevenueCat keys will still misbehave for internal testers.
-2. Confirm/complete Group B accounts in parallel — this is the long-pole item if either account isn't actually active yet.
-3. `eas build --profile production --platform ios` (and `--platform android` for a parallel Play internal test track) once Group A/B are done. Let EAS manage credentials unless you already have a preferred cert/profile workflow.
-4. `eas submit --platform ios` → App Store Connect → add internal/external TestFlight testers (Sean should be one, given he's closest to the content).
-5. Only after a TestFlight round with no major issues, promote to App Store / Play production review — fill in Group C content at that point if not already done (TestFlight doesn't require full store listing content; production submission does).
+Since the Google Play account is already accessible and Apple's is stuck on an invite, don't block the whole plan on Apple:
 
-## Open question for Souriya
+1. **Fix Group A (code blockers)** — these matter for both platforms and for TestFlight too; a build with placeholder RevenueCat keys will misbehave for any real tester on either store.
+2. **Android, same day:** install `eas-cli`, confirm Souriya's Play Console access level, `eas build --profile production --platform android`, then `eas submit --platform android` to a Play internal testing track once a Play service account key exists (check whether Souriya's current access can self-serve that, or needs Sean).
+3. **iOS, in parallel:** send Sean the Team API Key request above today. Try `eas build --platform ios` with just the key first; only go back to Sean about the invite if EAS actually demands an interactive Apple login.
+4. Once the iOS build exists, `eas submit --platform ios` with the API key → App Store Connect → add internal/external TestFlight testers (Sean should be one, given he's closest to the content).
+5. Only after a TestFlight/internal-testing round with no major issues, promote to App Store / Play production review — fill in Group C content at that point if not already done (TestFlight/internal testing doesn't require full store listing content; production submission does).
 
-Apple Developer Program and Google Play Console status (Group B, item 1-2) couldn't be verified from the repo or EAS config — the original brief's "already submitted" claim doesn't match what's actually configured. Confirming this first determines whether Group B starts today or has a 1-2 day Apple review wait baked into the timeline.
+## Resolved / open questions
+
+- [x] Whose accounts are these — confirmed Sean's (Apple + Google), not a Rumble Hold org account. Souriya has Google Play access; the Apple invite never arrived — see "Unblocking Apple" above.
+- [ ] Whether Souriya (or Sean) also needs separate access to the **Expo/EAS account** the project (`projectId 2448a5a2-6454-43b9-925d-61101cd415fd`) lives under — not yet checked, and could be its own stuck-invite problem independent of Apple/Google.
