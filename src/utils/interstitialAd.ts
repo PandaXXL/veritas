@@ -5,6 +5,7 @@
 // Call showInterstitialIfNeeded() after a card is mastered.
 
 import { Platform, Alert } from "react-native";
+import { getRequestNonPersonalizedAdsOnly } from "./adTracking";
 
 // Dynamic require so the web bundle doesn't try to load native modules
 let InterstitialAd: any = null;
@@ -34,7 +35,9 @@ let interstitialsShown = 0;
 function loadInterstitial() {
   if (Platform.OS === "web" || !InterstitialAd) return;
 
-  const ad = InterstitialAd.createForAdRequest(adUnitId);
+  const ad = InterstitialAd.createForAdRequest(adUnitId, {
+    requestNonPersonalizedAdsOnly: getRequestNonPersonalizedAdsOnly(),
+  });
   adInstance = ad;
   isLoaded = false;
 

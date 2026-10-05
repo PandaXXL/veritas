@@ -6,6 +6,15 @@ import Navigation from "./src/navigation";
 import { useGameState } from "./src/store/useGameState";
 import { preloadInterstitial } from "./src/utils/interstitialAd";
 import { initRevenueCat } from "./src/hooks/useRevenueCat";
+import { setTrackingGranted } from "./src/utils/adTracking";
+
+// Dynamic require — expo-tracking-transparency only applies on iOS
+let requestTrackingPermissionsAsync: any = null;
+
+if (Platform.OS === "ios") {
+  requestTrackingPermissionsAsync =
+    require("expo-tracking-transparency").requestTrackingPermissionsAsync;
+}
 
 // Dynamic require — AdMob has no web support
 let MobileAds: any = null;
@@ -23,7 +32,7 @@ export default function App() {
 
   useEffect(() => {
     checkStreak();
-    initAds();
+    initTrackingThenAds();
     initRevenueCat(setPremium);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -33,6 +42,22 @@ export default function App() {
       <Navigation />
     </View>
   );
+}
+
+async function initTrackingThenAds() {
+  // Ask for ATT permission before any ad request goes out, so the ad
+  // components (adTracking.ts) know whether to request personalized or
+  // non-personalized ads. Must resolve before initAds() for this to matter.
+  if (Platform.OS === "ios" && requestTrackingPermissionsAsync) {
+    try {
+      const { status } = await requestTrackingPermissionsAsync();
+      setTrackingGranted(status === "granted");
+    } catch {
+      setTrackingGranted(false);
+    }
+  }
+
+  await initAds();
 }
 
 async function initAds() {

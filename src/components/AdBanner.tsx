@@ -6,6 +6,7 @@
 import React from "react";
 import { View, Platform } from "react-native";
 import { useGameState } from "../store/useGameState";
+import { getRequestNonPersonalizedAdsOnly } from "../utils/adTracking";
 
 // Dynamic require — react-native-google-mobile-ads has no web support
 let BannerAd: any = null;
@@ -38,7 +39,7 @@ export function AdBanner() {
       <BannerAd
         unitId={adUnitId}
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        requestOptions={{ requestNonPersonalizedAdsOnly: false }}
+        requestOptions={{ requestNonPersonalizedAdsOnly: getRequestNonPersonalizedAdsOnly() }}
       />
     </View>
   );

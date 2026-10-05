@@ -43,7 +43,8 @@
           "user_tracking_usage_description": "This identifier will be used to deliver personalized ads to you.",
           "sk_ad_network_items": []
         }
-      ]
+      ],
+      "expo-tracking-transparency"
     ],
     "extra": {
       "eas": {
