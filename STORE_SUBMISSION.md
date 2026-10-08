@@ -8,6 +8,8 @@
 
 **Status update 2026-10-05 (night, closing out):** ATT fix **committed and pushed** — `git commit 6c8282d` on `origin/main`, confirmed via `git log`. That was the last step on ATT; it's fully done now, nothing left to run. The `Paxello Android Screens.zip` screenshots got reviewed too (connected directly as a folder, not the zip) — see new Group A.2 below for what they show, including one real finding worth checking.
 
+**Status update 2026-10-08:** This file's last edit (logging the ATT push confirmation and the Android screenshot/RevenueCat-toast finding) is now committed — `git commit 2a8cf2b` — but **not yet pushed**; this tool's device link can't authenticate to GitHub (`fatal: could not read Username for 'https://github.com'`), same limitation as before. Run `git push origin main` from a normal terminal to publish it. Also: the stale empty `.git` lock files (`HEAD.lock`, `index.lock`, `objects/maintenance.lock`) recurred after this tool's git commands — same root cause as 2026-10-05 (git can't clean up its own lock files under this environment's delete restriction) — and were cleared this time too, so they're not currently blocking anything. If a commit from any terminal ever fails with a lock "File exists" error on this repo, that's the cause.
+
 ## Group A — Code blockers (must fix before any build you intend to submit)
 
 - [ ] **AdMob App IDs are Google's public sample IDs, not real ones.** `app.json` plugins config has `androidAppId`/`iosAppId` = `ca-app-pub-3940256099942544~...` — Google's demo app ID. Replace with the real App IDs from your AdMob account (one per platform).
