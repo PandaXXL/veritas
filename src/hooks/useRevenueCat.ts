@@ -24,8 +24,8 @@ if (Platform.OS !== "web") {
 }
 
 const RC_API_KEYS = {
-  ios: "YOUR_REVENUECAT_IOS_API_KEY", // TODO: Replace with key from RevenueCat dashboard
-  android: "YOUR_REVENUECAT_ANDROID_API_KEY", // TODO: Replace with key
+  ios: "YOUR_REVENUECAT_IOS_API_KEY", // TODO: still a placeholder — blocked on Sean's App Store Connect API key (no RevenueCat iOS app exists yet)
+  android: "goog_yAmtAsCadPPNqhqrbjyWejauand", // Paxello (Play Store), wired 2026-10-09
 };
 
 const ENTITLEMENT_ID = "remove_ads";
