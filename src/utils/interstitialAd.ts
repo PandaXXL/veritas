@@ -20,8 +20,8 @@ if (Platform.OS !== "web") {
 }
 
 const INTERSTITIAL_ID = {
-  ios: "ca-app-pub-REPLACE_ME/REPLACE_ME_IOS_INTERSTITIAL", // TODO: real ID at store submission
-  android: "ca-app-pub-REPLACE_ME/REPLACE_ME_ANDROID_INTERSTITIAL",
+  ios: "ca-app-pub-5791395628689572/7341219729",
+  android: "ca-app-pub-5791395628689572/3377923988",
 };
 
 const adUnitId = __DEV__

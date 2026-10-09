@@ -21,8 +21,8 @@ if (Platform.OS !== "web") {
 }
 
 const BANNER_ID = {
-  ios: "ca-app-pub-REPLACE_ME/REPLACE_ME_IOS_BANNER", // TODO: real ID at store submission
-  android: "ca-app-pub-REPLACE_ME/REPLACE_ME_ANDROID_BANNER",
+  ios: "ca-app-pub-5791395628689572/4906628075",
+  android: "ca-app-pub-5791395628689572/1489203804",
 };
 
 const adUnitId = __DEV__
